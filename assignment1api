@@ -1,0 +1,156 @@
+# Base Class: Product
+class Product:
+    def __init__(self, product_id, name, price, stock):
+        self.product_id = product_id
+        self._name = name              # Encapsulated attribute
+        self._price = price             # Encapsulated attribute
+        self._stock = stock             # Encapsulated attribute
+
+    def get_price(self):
+        return self._price
+
+    def get_stock(self):
+        return self._stock
+
+    def reduce_stock(self, quantity):
+        if quantity <= self._stock:
+            self._stock -= quantity
+            return True
+        return False
+
+    def __str__(self):
+        return f"Product ID: {self.product_id}, Name: {self._name}, Price: ${self._price}, Stock: {self._stock}"
+
+# Inherited Class: Electronics (Polymorphism and Inheritance)
+class Electronics(Product):
+    def __init__(self, product_id, name, price, stock, warranty):
+        super().__init__(product_id, name, price, stock)
+        self.warranty = warranty
+
+    def __str__(self):
+        return super().__str__() + f", Warranty: {self.warranty} years"
+
+# Inherited Class: Clothing (Polymorphism and Inheritance)
+class Clothing(Product):
+    def __init__(self, product_id, name, price, stock, size):
+        super().__init__(product_id, name, price, stock)
+        self.size = size
+
+    def __str__(self):
+        return super().__str__() + f", Size: {self.size}"
+
+# Class: Cart (Composite class with basic exception handling)
+class Cart:
+    def __init__(self):
+        self.items = {}
+
+    def add_product(self, product, quantity):
+        if quantity > product.get_stock():
+            print("Sorry, not enough stock!")
+            return False
+        if product.product_id in self.items:
+            self.items[product.product_id]["quantity"] += quantity
+        else:
+            self.items[product.product_id] = {"product": product, "quantity": quantity}
+        product.reduce_stock(quantity)
+        return True
+
+    def remove_product(self, product_id):
+        if product_id in self.items:
+            product = self.items[product_id]["product"]
+            quantity = self.items[product_id]["quantity"]
+            product.reduce_stock(-quantity)  # Add the stock back
+            del self.items[product_id]
+            print("Product removed from the cart.")
+        else:
+            print("Product not found in the cart.")
+
+    def view_cart(self):
+        if not self.items:
+            print("Your cart is empty.")
+            return
+        for item in self.items.values():
+            product, quantity = item["product"], item["quantity"]
+            print(f"{product} - Quantity: {quantity}")
+
+    def checkout(self):
+        total = sum(item["product"].get_price() * item["quantity"] for item in self.items.values())
+        self.items.clear()
+        print(f"Order placed successfully! Total amount: ${total}")
+
+# Class: Customer
+class Customer:
+    def __init__(self, name):
+        self.name = name
+        self.cart = Cart()
+
+    def add_to_cart(self, product, quantity):
+        self.cart.add_product(product, quantity)
+
+    def remove_from_cart(self, product_id):
+        self.cart.remove_product(product_id)
+
+    def view_cart(self):
+        self.cart.view_cart()
+
+    def checkout(self):
+        self.cart.checkout()
+
+# Sample Data and Interactions
+def main():
+    # Sample products
+    laptop = Electronics(product_id=101, name="Laptop", price=800, stock=5, warranty=2)
+    phone = Electronics(product_id=102, name="Phone", price=500, stock=3, warranty=1)
+    tshirt = Clothing(product_id=201, name="T-Shirt", price=20, stock=10, size="M")
+
+    # Sample Customer
+    customer = Customer(name="John Doe")
+
+    # Interactive session
+    while True:
+        print("\n--- Shopping Cart Menu ---")
+        print("1. Add Product to Cart")
+        print("2. Remove Product from Cart")
+        print("3. View Cart")
+        print("4. Checkout")
+        print("5. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            print("Available products:")
+            print(laptop)
+            print(phone)
+            print(tshirt)
+
+            pid = int(input("Enter product ID to add: "))
+            qty = int(input("Enter quantity: "))
+
+            if pid == 101:
+                customer.add_to_cart(laptop, qty)
+            elif pid == 102:
+                customer.add_to_cart(phone, qty)
+            elif pid == 201:
+                customer.add_to_cart(tshirt, qty)
+            else:
+                print("Invalid Product ID.")
+
+        elif choice == "2":
+            pid = int(input("Enter product ID to remove from cart: "))
+            customer.remove_from_cart(pid)
+
+        elif choice == "3":
+            customer.view_cart()
+
+        elif choice == "4":
+            customer.checkout()
+
+        elif choice == "5":
+            print("Thank you for shopping!")
+            break
+
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
